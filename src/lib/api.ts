@@ -124,7 +124,36 @@ export async function sendConversation(
 
   const normalizedMessage = message.toLowerCase();
 
+  // If the UI prepends a constraints header, we can use it to bias routing.
+  // Example: "[Constraints: occasion=Work & Professional, budget=800-2500, delivery=flexible] ..."
+  const constraintsMatch = normalizedMessage.match(/\[constraints:\s*([^\]]+)\]/);
+  const constraintsRaw = constraintsMatch?.[1] || "";
+  const occasionMatch = constraintsRaw.match(/occasion\s*=\s*([^,]+)\s*(,|$)/);
+  const occasion = occasionMatch?.[1]?.trim() || null;
+
+  const occasionKey =
+    occasion?.includes("work") ? "work"
+      : occasion?.includes("evening") ? "evening"
+        : occasion?.includes("travel") ? "travel"
+          : occasion?.includes("special") ? "special occasions"
+            : null;
+
   // Find matching response
+  if (occasionKey && mockConversationResponses[occasionKey]) {
+    const response = mockConversationResponses[occasionKey];
+    const enrichedDirections = response.directions.map((dir) => ({
+      ...dir,
+      items: dir.suggestedItems
+        .map((id) => mockItems.find((item) => item.id === id))
+        .filter(Boolean),
+    }));
+
+    return {
+      ...response,
+      directions: enrichedDirections,
+    };
+  }
+
   for (const [key, response] of Object.entries(mockConversationResponses)) {
     if (normalizedMessage.includes(key)) {
       // Enrich directions with full item data

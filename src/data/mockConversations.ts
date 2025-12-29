@@ -122,6 +122,29 @@ export const mockConversationResponses: Record<string, ConversationResponse> = {
     ],
     followUp: "Is this for a specific event or building your evening wardrobe generally?",
   },
+
+  "special occasions": {
+    understanding:
+      "Understood. For a special occasion, we want precision: silhouette, cultural appropriateness, comfort under time pressure, and a clear acquisition path if availability is uncertain.",
+    directions: [
+      {
+        id: "dir_013",
+        title: "Quiet Formal",
+        description:
+          "Elegant structure and refined materials that read formal without feeling costume-like.",
+        suggestedItems: ["item_001", "item_004"],
+      },
+      {
+        id: "dir_014",
+        title: "Statement Through Craft",
+        description:
+          "A single heritage element (scarf/accessory) that elevates the entire look.",
+        suggestedItems: ["item_005", "item_003"],
+      },
+    ],
+    followUp:
+      "What is the setting (wedding, gala, cultural evening) and what time window do you have for delivery?",
+  },
 };
 
 export const defaultConversationResponse: ConversationResponse = {

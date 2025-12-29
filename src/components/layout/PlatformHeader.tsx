@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, User, Menu } from "lucide-react";
+import { Sparkles, Heart, Menu } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,10 @@ export function PlatformHeader() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link
+            href={isAuthenticated ? "/intelligence" : "/"}
+            className="flex items-center gap-2"
+          >
             <Sparkles className="h-5 w-5 text-gold-muted" />
             <span className="font-display text-xl font-semibold text-noir">
               {SITE_NAME}
@@ -50,14 +53,21 @@ export function PlatformHeader() {
           {/* Right Side */}
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
-              <Link href="/account">
-                <Avatar className="h-9 w-9 border border-sand">
-                  <AvatarImage src={user?.avatar} alt={user?.name} />
-                  <AvatarFallback className="bg-sand text-stone text-xs">
-                    {user?.name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
+              <>
+                <Link href="/selections" aria-label="Wishlist">
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Heart className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/account" aria-label="Account">
+                  <Avatar className="h-9 w-9 border border-sand">
+                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                    <AvatarFallback className="bg-sand text-stone text-xs">
+                      {user?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+              </>
             ) : (
               <Link href="/signin">
                 <Button variant="ghost" size="sm">

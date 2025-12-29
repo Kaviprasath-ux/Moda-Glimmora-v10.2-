@@ -37,6 +37,12 @@ export function PlatformFooter() {
                     {item.name}
                   </Link>
                 ))}
+                <Link
+                  href="/selections"
+                  className="text-sm text-stone hover:text-noir transition-colors"
+                >
+                  Wishlist
+                </Link>
               </div>
             </div>
 

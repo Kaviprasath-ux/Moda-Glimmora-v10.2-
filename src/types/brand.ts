@@ -6,6 +6,7 @@ export interface Brand {
   origin: string;
   logo: string;
   heroImage: string;
+  officialSiteUrl: string;
   philosophy: string;
   alignmentReason: string;
   universe: BrandUniverse;

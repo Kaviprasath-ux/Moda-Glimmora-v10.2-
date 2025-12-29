@@ -5,7 +5,7 @@ export const SITE_DESCRIPTION =
 
 export const NAVIGATION = {
   main: [
-    { name: "Intelligence", href: "/intelligence" },
+    { name: "Home", href: "/intelligence" },
     { name: "Discover", href: "/discover" },
     { name: "Universes", href: "/universes" },
     { name: "Wardrobe", href: "/wardrobe" },

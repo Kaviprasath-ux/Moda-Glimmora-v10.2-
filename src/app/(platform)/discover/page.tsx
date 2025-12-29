@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, Mic, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,10 @@ import { FitScore } from "@/components/shared/FitScore";
 import { LoadingIntelligence } from "@/components/shared/LoadingIntelligence";
 import { useConversation } from "@/hooks/useConversation";
 import Link from "next/link";
+import * as api from "@/lib/api";
+import type { Brand } from "@/types";
+import { useDiscoveryPreferencesStore } from "@/stores/discoveryPreferencesStore";
+import { OCCASION_OPTIONS } from "@/types/identity";
 
 const SUGGESTED_PROMPTS = [
   "Something for work",
@@ -21,18 +26,88 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export default function DiscoverPage() {
+  const searchParams = useSearchParams();
+  const brandId = searchParams.get("brand");
+  const prefill = searchParams.get("prefill");
+  const qpOccasion = searchParams.get("occasion");
+  const qpBudgetMin = searchParams.get("budgetMin");
+  const qpBudgetMax = searchParams.get("budgetMax");
+  const qpDelivery = searchParams.get("delivery");
   const [input, setInput] = useState("");
   const { messages, isLoading, currentDirections, sendMessage } = useConversation();
+  const { preferences, setPreferences } = useDiscoveryPreferencesStore();
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [didSeed, setDidSeed] = useState(false);
+  const [didApplyQueryPrefs, setDidApplyQueryPrefs] = useState(false);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!brandId) return;
+      const data = await api.getBrand(brandId);
+      setBrand(data);
+    };
+    run();
+  }, [brandId]);
+
+  useEffect(() => {
+    if (didApplyQueryPrefs) return;
+    const patch: any = {};
+    if (qpOccasion) patch.occasion = qpOccasion;
+    if (qpBudgetMin) patch.budgetMin = parseInt(qpBudgetMin);
+    if (qpBudgetMax) patch.budgetMax = parseInt(qpBudgetMax);
+    if (qpDelivery && ["flexible", "soon", "urgent"].includes(qpDelivery)) {
+      patch.deliveryUrgency = qpDelivery;
+    }
+    if (Object.keys(patch).length > 0) {
+      setPreferences(patch);
+    }
+    setDidApplyQueryPrefs(true);
+  }, [didApplyQueryPrefs, qpBudgetMax, qpBudgetMin, qpDelivery, qpOccasion, setPreferences]);
+
+  const constraintsPrefix = useMemo(() => {
+    const parts: string[] = [];
+    if (preferences.occasion) parts.push(`occasion=${preferences.occasion}`);
+    if (preferences.budgetMin != null || preferences.budgetMax != null) {
+      parts.push(`budget=${preferences.budgetMin ?? "?"}-${preferences.budgetMax ?? "?"}`);
+    }
+    if (preferences.deliveryUrgency) parts.push(`delivery=${preferences.deliveryUrgency}`);
+    if (brand?.name) parts.push(`brand=${brand.name}`);
+    return parts.length ? `[Constraints: ${parts.join(", ")}] ` : "";
+  }, [brand?.name, preferences]);
+
+  const prompts = useMemo(() => {
+    if (!preferences.occasion) return SUGGESTED_PROMPTS;
+    const o = preferences.occasion.toLowerCase();
+    if (o.includes("work")) return ["Client meeting", "Office week refresh", "Smart professional capsule"];
+    if (o.includes("evening")) return ["Gallery opening", "Evening event", "Dinner with presence"];
+    if (o.includes("travel")) return ["Travel capsule", "Day-to-evening travel look", "Airport to dinner"];
+    if (o.includes("special")) return ["Wedding guest look", "Gala-ready but restrained", "Special occasion outfit"];
+    return SUGGESTED_PROMPTS;
+  }, [preferences.occasion]);
+
+  useEffect(() => {
+    if (didSeed) return;
+    if (prefill && messages.length === 0) {
+      setDidSeed(true);
+      void sendMessage(`${constraintsPrefix}${prefill}`);
+      return;
+    }
+    if (!brand) return;
+    if (messages.length > 0) return;
+    setDidSeed(true);
+    void sendMessage(`${constraintsPrefix}Explore pieces from ${brand.name}. Culture-first, commerce-silent.`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand, didSeed, messages.length, prefill, constraintsPrefix, sendMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    await sendMessage(input);
+    await sendMessage(`${constraintsPrefix}${input}`);
     setInput("");
   };
 
   const handleSuggestion = async (prompt: string) => {
-    await sendMessage(prompt);
+    await sendMessage(`${constraintsPrefix}${prompt}`);
   };
 
   return (
@@ -45,6 +120,72 @@ export default function DiscoverPage() {
           Tell me what you&apos;re looking for, in your words
         </p>
       </div>
+
+      {/* Preferences */}
+      <Card className="mb-6">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-noir font-medium">Discovery Preferences</p>
+            {brand && (
+              <span className="text-xs px-2 py-1 rounded-full bg-sand-light text-stone">
+                Universe: {brand.name}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-stone">Occasion</p>
+              <select
+                value={preferences.occasion ?? ""}
+                onChange={(e) => setPreferences({ occasion: e.target.value || null })}
+                className="w-full h-10 rounded-lg border border-sand bg-surface-elevated px-3 text-sm"
+              >
+                <option value="">Any</option>
+                {OCCASION_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.name}>{o.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-stone">Budget (min)</p>
+              <input
+                type="number"
+                value={preferences.budgetMin ?? ""}
+                onChange={(e) => setPreferences({ budgetMin: e.target.value ? parseInt(e.target.value) : null })}
+                placeholder="e.g., 500"
+                className="w-full h-10 rounded-lg border border-sand bg-surface-elevated px-3 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-stone">Budget (max)</p>
+              <input
+                type="number"
+                value={preferences.budgetMax ?? ""}
+                onChange={(e) => setPreferences({ budgetMax: e.target.value ? parseInt(e.target.value) : null })}
+                placeholder="e.g., 2500"
+                className="w-full h-10 rounded-lg border border-sand bg-surface-elevated px-3 text-sm"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-stone">Delivery urgency</p>
+              <select
+                value={preferences.deliveryUrgency}
+                onChange={(e) => setPreferences({ deliveryUrgency: e.target.value as any })}
+                className="w-full h-10 rounded-lg border border-sand bg-surface-elevated px-3 text-sm"
+              >
+                <option value="flexible">Flexible</option>
+                <option value="soon">Soon</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+            <div className="md:col-span-2 text-xs text-stone flex items-center">
+              These preferences shape your discovery experience.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Conversation */}
       <div className="space-y-6 mb-8">
@@ -117,10 +258,19 @@ export default function DiscoverPage() {
                                 </div>
                               )}
 
-                              <Button size="sm" variant="secondary" className="gap-1">
-                                Explore this direction
-                                <ArrowRight className="h-3 w-3" />
-                              </Button>
+                              {direction.items && direction.items.length > 0 ? (
+                                <Link href={`/item/${direction.items[0].id}`}>
+                                  <Button size="sm" variant="secondary" className="gap-1">
+                                    Explore this direction
+                                    <ArrowRight className="h-3 w-3" />
+                                  </Button>
+                                </Link>
+                              ) : (
+                                <Button size="sm" variant="secondary" className="gap-1" disabled>
+                                  Explore this direction
+                                  <ArrowRight className="h-3 w-3" />
+                                </Button>
+                              )}
                             </CardContent>
                           </Card>
                         ))}
@@ -180,7 +330,7 @@ export default function DiscoverPage() {
 
         {messages.length === 0 && (
           <div className="flex flex-wrap gap-2 justify-center">
-            {SUGGESTED_PROMPTS.map((prompt) => (
+            {prompts.map((prompt) => (
               <Button
                 key={prompt}
                 variant="secondary"

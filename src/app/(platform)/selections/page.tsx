@@ -31,8 +31,8 @@ export default function SelectionsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="font-display text-display-md text-noir">Selections</h1>
-        <p className="text-stone">Your considered pieces and intelligent suggestions</p>
+        <h1 className="font-display text-display-md text-noir">Wishlist</h1>
+        <p className="text-stone">Saved pieces and intelligent suggestions</p>
       </div>
 
       {/* Silent Suggestions */}
@@ -75,14 +75,14 @@ export default function SelectionsPage() {
         </section>
       )}
 
-      {/* Considerations */}
+      {/* Wishlist */}
       <section>
-        <h2 className="font-display text-xl text-noir mb-4">Your Considerations</h2>
+        <h2 className="font-display text-xl text-noir mb-4">Your Wishlist</h2>
 
         {considerations.length === 0 ? (
           <EmptyState
-            title="No considerations yet"
-            description="Save items you're thinking about to review them here"
+            title="Your wishlist is empty"
+            description="Save pieces you’re considering and review them here anytime"
             action={{
               label: "Discover pieces",
               onClick: () => window.location.href = "/discover",
@@ -132,7 +132,9 @@ export default function SelectionsPage() {
                         className="w-24"
                       />
                     </div>
-                    <Link href={`/item/${item.id}`}>
+                    <Link
+                      href={`/acquire?itemId=${encodeURIComponent(item.id)}&size=${encodeURIComponent(item.sizes?.[Math.floor(item.sizes.length / 2)] || "")}&color=${encodeURIComponent(item.colors?.[0]?.name || "")}`}
+                    >
                       <Button size="sm" className="w-full mt-3">
                         Begin Acquisition
                       </Button>

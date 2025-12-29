@@ -15,3 +15,6 @@ export * from "./wardrobe";
 
 // Intelligence types
 export * from "./intelligence";
+
+// Calendar types
+export * from "./calendar";

@@ -29,11 +29,11 @@ export function useAuth() {
   }, [login, setLoading]);
 
   const signIn = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, next?: string | null) => {
       try {
         const result = await api.signIn(email, password);
         login(result.user, result.token);
-        router.push("/intelligence");
+        router.push(next && next.startsWith("/") ? next : "/intelligence");
         return { success: true };
       } catch (error) {
         return {

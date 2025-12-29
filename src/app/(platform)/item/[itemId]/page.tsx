@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Heart, Bell, ThumbsUp, ThumbsDown, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Heart, Bell, ThumbsUp, ThumbsDown, Check, AlertTriangle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,10 @@ import { AvailabilityBar } from "@/components/shared/AvailabilityBar";
 import { FitScore } from "@/components/shared/FitScore";
 import { LoadingIntelligence } from "@/components/shared/LoadingIntelligence";
 import { useSelectionsStore } from "@/stores/selectionsStore";
+import { useAvailability } from "@/hooks/useAvailability";
+import { useAvailabilitySubscriptionsStore } from "@/stores/availabilitySubscriptionsStore";
+import { useFeedbackStore } from "@/stores/feedbackStore";
+import { useAgentMemoryStore } from "@/stores/agentMemoryStore";
 import * as api from "@/lib/api";
 import { formatCurrency, getFitPredictionColor, cn } from "@/lib/utils";
 import type { Item } from "@/types";
@@ -25,6 +29,23 @@ export default function ItemPage() {
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const { addToConsiderations, isInConsiderations } = useSelectionsStore();
+  const { subscribeToItem } = useAvailability();
+  const existingSub = useAvailabilitySubscriptionsStore(
+    (s) => s.subscriptions[itemId] ?? null
+  );
+  const subscribe = useAvailabilitySubscriptionsStore((s) => s.subscribe);
+  const unsubscribe = useAvailabilitySubscriptionsStore((s) => s.unsubscribe);
+  const [subThreshold, setSubThreshold] = useState(70);
+  const [subStatus, setSubStatus] = useState<string>("");
+  const [feedbackStatus, setFeedbackStatus] = useState<string>("");
+  const recordFeedback = useFeedbackStore((s) => s.record);
+  const upsertTrait = useAgentMemoryStore((s) => s.upsertTrait);
+
+  useEffect(() => {
+    if (existingSub?.threshold != null) {
+      setSubThreshold(existingSub.threshold);
+    }
+  }, [existingSub?.threshold]);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -56,6 +77,7 @@ export default function ItemPage() {
   }
 
   const inConsiderations = isInConsiderations(item.id);
+  const selectedColorName = item.colors[selectedColor]?.name || "Default";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -171,12 +193,41 @@ export default function ItemPage() {
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-stone">Was this helpful?</span>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    recordFeedback({ itemId: item.id, type: "reasoning_helpful", value: "up" });
+                    upsertTrait({
+                      id: "reasoning_feedback",
+                      label: "Reasoning feedback",
+                      value: "Finds explanations helpful",
+                      source: "feedback",
+                    });
+                    setFeedbackStatus("Thanks — recorded.");
+                  }}
+                >
                   <ThumbsUp className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    recordFeedback({ itemId: item.id, type: "reasoning_helpful", value: "down" });
+                    upsertTrait({
+                      id: "reasoning_feedback",
+                      label: "Reasoning feedback",
+                      value: "Wants shorter explanations",
+                      source: "feedback",
+                    });
+                    setFeedbackStatus("Thanks — recorded.");
+                  }}
+                >
                   <ThumbsDown className="h-4 w-4" />
                 </Button>
+                {feedbackStatus && <span className="text-xs text-stone">{feedbackStatus}</span>}
               </div>
             </div>
           </CardContent>
@@ -260,11 +311,55 @@ export default function ItemPage() {
               <p className="text-sm text-stone">
                 Restock probability: {item.availabilityIntelligence.restockIntelligence.probability}% within {item.availabilityIntelligence.restockIntelligence.estimatedDays} days
               </p>
-              <Button variant="secondary" size="sm" className="mt-2 gap-1">
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <select
+                  value={subThreshold}
+                  onChange={(e) => setSubThreshold(parseInt(e.target.value))}
+                  className="h-9 rounded-lg border border-sand bg-surface-elevated px-3 text-sm"
+                >
+                  {[50, 60, 70, 80, 90].map((t) => (
+                    <option key={t} value={t}>Alert at ≥ {t}%</option>
+                  ))}
+                </select>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="gap-1"
+                  onClick={async () => {
+                    if (existingSub) {
+                      unsubscribe(itemId);
+                      setSubStatus("Alert removed.");
+                      return;
+                    }
+                    await subscribeToItem(itemId);
+                    subscribe(itemId, subThreshold);
+                    setSubStatus("Alert created.");
+                  }}
+                >
                 <Bell className="h-3 w-3" />
-                Notify me of changes
-              </Button>
+                {existingSub ? "Remove alert" : "Notify me of changes"}
+                </Button>
+                {subStatus && <span className="text-xs text-stone">{subStatus}</span>}
+              </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Digital Fashion Passport */}
+        <Card className="intelligence-panel">
+          <CardHeader className="intelligence-panel-header">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-gold-muted" />
+              Digital Fashion Passport
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="intelligence-panel-body">
+            <p className="text-sm text-stone mb-3">
+              Authenticity and provenance verification.
+            </p>
+            <Link href={`/passport/${item.id}`}>
+              <Button size="sm" variant="secondary">View Passport</Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -305,9 +400,14 @@ export default function ItemPage() {
       <div className="sticky bottom-4 mt-8">
         <Card className="shadow-moda-xl">
           <CardContent className="p-4 flex gap-4">
-            <Button className="flex-1" size="lg">
-              Begin Acquisition
-            </Button>
+            <Link
+              href={`/acquire?itemId=${encodeURIComponent(item.id)}&size=${encodeURIComponent(selectedSize || "")}&color=${encodeURIComponent(selectedColorName)}`}
+              className="flex-1"
+            >
+              <Button className="w-full" size="lg">
+                Begin Acquisition
+              </Button>
+            </Link>
             <Button
               variant="secondary"
               size="lg"
@@ -315,7 +415,7 @@ export default function ItemPage() {
               onClick={() => addToConsiderations(item)}
             >
               <Heart className={cn("h-4 w-4 mr-2", inConsiderations && "fill-current")} />
-              {inConsiderations ? "Saved" : "Save to Considerations"}
+              {inConsiderations ? "Saved" : "Save to Wishlist"}
             </Button>
           </CardContent>
         </Card>

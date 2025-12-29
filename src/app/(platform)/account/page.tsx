@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { User, Sparkles, Shield, Database, LogOut, ChevronRight } from "lucide-react";
+import { User, Sparkles, Shield, Database, Calendar, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +19,18 @@ const ACCOUNT_LINKS = [
     icon: <Sparkles className="h-5 w-5" />,
     title: "AI Agent Configuration",
     description: "Proactivity, alerts, and communication preferences",
+  },
+  {
+    href: "/account/memory",
+    icon: <Sparkles className="h-5 w-5" />,
+    title: "Agent Memory",
+    description: "View, edit, and reset what the agent learns",
+  },
+  {
+    href: "/account/calendar",
+    icon: <Calendar className="h-5 w-5" />,
+    title: "Calendar",
+    description: "Connect events for automatic preparation",
   },
   {
     href: "/account/privacy",
@@ -54,9 +66,11 @@ export default function AccountPage() {
               <p className="text-stone">{user?.email}</p>
               <p className="text-xs text-stone mt-1">Member since {user?.createdAt}</p>
             </div>
-            <Button variant="secondary" size="sm">
-              Edit Profile
-            </Button>
+            <Link href="/account/identity">
+              <Button variant="secondary" size="sm">
+                Edit Profile
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

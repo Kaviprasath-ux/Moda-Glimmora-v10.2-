@@ -195,12 +195,20 @@ export default function BrandUniversePage() {
                   I&apos;m here to share, not to sell.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="secondary" size="sm">
-                    Tell me about the heritage
-                  </Button>
-                  <Button variant="secondary" size="sm">
-                    How are pieces made?
-                  </Button>
+                  <Link
+                    href={`/discover?brand=${encodeURIComponent(brand.id)}&prefill=${encodeURIComponent(`Tell me about the heritage of ${brand.name}.`)}`}
+                  >
+                    <Button variant="secondary" size="sm">
+                      Tell me about the heritage
+                    </Button>
+                  </Link>
+                  <Link
+                    href={`/discover?brand=${encodeURIComponent(brand.id)}&prefill=${encodeURIComponent(`How are ${brand.name} pieces made?`)}`}
+                  >
+                    <Button variant="secondary" size="sm">
+                      How are pieces made?
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>

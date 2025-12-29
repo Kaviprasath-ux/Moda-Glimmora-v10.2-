@@ -9,6 +9,7 @@ export const mockBrands: Brand[] = [
     origin: "Paris, France",
     logo: "/brands/hermes-logo.svg",
     heroImage: "/brands/hermes-hero.jpg",
+    officialSiteUrl: "https://www.hermes.com",
     philosophy:
       "Hermes does not follow fashion. Hermes follows craft. For nearly two centuries, the house has maintained a singular commitment: the relentless pursuit of excellence in craftsmanship.",
     alignmentReason:
@@ -83,6 +84,7 @@ export const mockBrands: Brand[] = [
     origin: "New York, USA",
     logo: "/brands/therow-logo.svg",
     heroImage: "/brands/therow-hero.jpg",
+    officialSiteUrl: "https://www.therow.com",
     philosophy:
       "The Row believes in a wardrobe built to last, designed with restraint, crafted with excellence. Luxury whispered, never shouted.",
     alignmentReason:
@@ -143,6 +145,7 @@ export const mockBrands: Brand[] = [
     origin: "Quarona, Italy",
     logo: "/brands/loropiana-logo.svg",
     heroImage: "/brands/loropiana-hero.jpg",
+    officialSiteUrl: "https://www.loropiana.com",
     philosophy:
       "Loro Piana is not about fashion. It's about the raw materials that make fashion possible. The world's finest cashmere, vicuna, and wool.",
     alignmentReason:
@@ -203,6 +206,7 @@ export const mockBrands: Brand[] = [
     origin: "Paris, France",
     logo: "/brands/celine-logo.svg",
     heroImage: "/brands/celine-hero.jpg",
+    officialSiteUrl: "https://www.celine.com",
     philosophy:
       "Celine represents Parisian elegance at its purest. Clean lines, luxurious materials, and a commitment to timeless design over trend.",
     alignmentReason:
@@ -263,6 +267,7 @@ export const mockBrands: Brand[] = [
     origin: "Hamburg, Germany",
     logo: "/brands/jilsander-logo.svg",
     heroImage: "/brands/jilsander-hero.jpg",
+    officialSiteUrl: "https://www.jilsander.com",
     philosophy:
       "Jil Sander pioneered minimalism in fashion. Pure form, impeccable tailoring, and the belief that less is infinitely more.",
     alignmentReason:

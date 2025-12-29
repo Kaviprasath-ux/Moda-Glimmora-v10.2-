@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { FashionIdentity, BodyIntelligence, AgentPreferences } from "@/types";
 
 interface IdentityState {
@@ -47,47 +48,64 @@ const initialState = {
   agentPreferences: {} as Partial<AgentPreferences>,
 };
 
-export const useIdentityStore = create<IdentityState>()((set, get) => ({
-  ...initialState,
+export const useIdentityStore = create<IdentityState>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
-  setCurrentStep: (step) => set({ currentStep: step }),
+      setCurrentStep: (step) => set({ currentStep: step }),
 
-  completeStep: (stepId) =>
-    set((state) => ({
-      completedSteps: state.completedSteps.includes(stepId)
-        ? state.completedSteps
-        : [...state.completedSteps, stepId],
-    })),
+      completeStep: (stepId) =>
+        set((state) => ({
+          completedSteps: state.completedSteps.includes(stepId)
+            ? state.completedSteps
+            : [...state.completedSteps, stepId],
+        })),
 
-  setPhilosophies: (philosophies) => set({ philosophies }),
+      setPhilosophies: (philosophies) => set({ philosophies }),
 
-  setCulturalAffinities: (culturalAffinities) => set({ culturalAffinities }),
+      setCulturalAffinities: (culturalAffinities) => set({ culturalAffinities }),
 
-  setBodyIntelligence: (data) =>
-    set((state) => ({
-      bodyIntelligence: { ...state.bodyIntelligence, ...data },
-    })),
+      setBodyIntelligence: (data) =>
+        set((state) => ({
+          bodyIntelligence: { ...state.bodyIntelligence, ...data },
+        })),
 
-  setOccasionPriorities: (occasionPriorities) => set({ occasionPriorities }),
+      setOccasionPriorities: (occasionPriorities) => set({ occasionPriorities }),
 
-  setColorPreferences: (colorPreferences) => set({ colorPreferences }),
+      setColorPreferences: (colorPreferences) => set({ colorPreferences }),
 
-  setAgentPreferences: (preferences) =>
-    set((state) => ({
-      agentPreferences: { ...state.agentPreferences, ...preferences },
-    })),
+      setAgentPreferences: (preferences) =>
+        set((state) => ({
+          agentPreferences: { ...state.agentPreferences, ...preferences },
+        })),
 
-  reset: () => set(initialState),
+      reset: () => set(initialState),
 
-  getIdentity: () => {
-    const state = get();
-    return {
-      philosophies: state.philosophies,
-      culturalAffinities: state.culturalAffinities,
-      occasionPriorities: state.occasionPriorities,
-      colorPreferences: state.colorPreferences,
-      confidenceLevel: 50,
-      brandAffinities: [],
-    };
-  },
-}));
+      getIdentity: () => {
+        const state = get();
+        return {
+          philosophies: state.philosophies,
+          culturalAffinities: state.culturalAffinities,
+          occasionPriorities: state.occasionPriorities,
+          colorPreferences: state.colorPreferences,
+          confidenceLevel: 50,
+          brandAffinities: [],
+        };
+      },
+    }),
+    {
+      name: "moda-identity",
+      partialize: (state) => ({
+        currentStep: state.currentStep,
+        completedSteps: state.completedSteps,
+        philosophies: state.philosophies,
+        culturalAffinities: state.culturalAffinities,
+        bodyIntelligence: state.bodyIntelligence,
+        occasionPriorities: state.occasionPriorities,
+        colorPreferences: state.colorPreferences,
+        agentPreferences: state.agentPreferences,
+      }),
+    }
+  )
+);
